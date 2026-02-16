@@ -1,6 +1,6 @@
 [package]
 name = "audioshift"
-version = "1.0.9"
+version = "1.1.0"
 description = "AudioShift - local voice to text transcription"
 authors = ["Aid Arslanagic"]
 edition = "2021"
@@ -59,6 +59,8 @@ windows = { version = "0.59", features = ["Win32_UI_Input_KeyboardAndMouse", "Wi
 arboard = "3"
 
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
-tauri-plugin-autostart = "2"
 tauri-plugin-updater = { version = "2", optional = true }
 tauri-plugin-process = "2"
+
+[target.'cfg(any(windows, target_os = "linux"))'.dependencies]
+tauri-plugin-autostart = "2"
