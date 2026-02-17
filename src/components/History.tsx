@@ -514,11 +514,13 @@ export default function History() {
                     </h3>
                     <button
                       onClick={() => handleCopy(selected.text)}
-                      className="flex items-center gap-1.5 px-2 py-1 text-xs rounded-md
-                                 bg-secondary border border-border hover:bg-accent
-                                 text-muted-foreground transition-colors"
+                      className={`flex items-center gap-1.5 px-3.5 py-1.5 text-sm rounded-md font-medium transition-colors ${
+                        copied
+                          ? "bg-primary/10 text-primary"
+                          : "bg-primary text-primary-foreground hover:bg-primary/90"
+                      }`}
                     >
-                      {copied ? <Check size={12} /> : <Copy size={12} />}
+                      {copied ? <Check size={14} /> : <Copy size={14} />}
                       {copied ? "Copied" : "Copy"}
                     </button>
                   </div>
