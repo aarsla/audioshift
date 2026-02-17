@@ -3,7 +3,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   SectionCard, SettingRow, ThemePicker, AccentPicker,
   OVERLAY_THEMES, OVERLAY_POSITIONS,
-  type ThemeMode, type AccentColor, type OverlayTheme, type OverlayPosition,
+  type ThemeMode, type AccentColor, type OverlayTheme, type OverlayPosition, type OverlayDismissDelay,
 } from "./shared";
 
 interface Props {
@@ -11,15 +11,17 @@ interface Props {
   accentColor: AccentColor;
   overlayPosition: OverlayPosition;
   overlayTheme: OverlayTheme;
+  overlayDismissDelay: OverlayDismissDelay;
   onThemeChange: (mode: ThemeMode) => void;
   onAccentChange: (accent: AccentColor) => void;
   onOverlayPositionChange: (pos: OverlayPosition) => void;
   onOverlayThemeChange: (theme: OverlayTheme) => void;
+  onOverlayDismissDelayChange: (delay: OverlayDismissDelay) => void;
 }
 
 export default function AppearancePage({
-  themeMode, accentColor, overlayPosition, overlayTheme,
-  onThemeChange, onAccentChange, onOverlayPositionChange, onOverlayThemeChange,
+  themeMode, accentColor, overlayPosition, overlayTheme, overlayDismissDelay,
+  onThemeChange, onAccentChange, onOverlayPositionChange, onOverlayThemeChange, onOverlayDismissDelayChange,
 }: Props) {
   return (
     <div className="space-y-4">
@@ -57,6 +59,32 @@ export default function AppearancePage({
                 }`}
               >
                 {t.label}
+              </button>
+            ))}
+          </div>
+        </SettingRow>
+        <Separator />
+        <SettingRow
+          label="Dismiss Delay"
+          description="How long the overlay shows transcribed text"
+        >
+          <div className="flex items-center gap-1 bg-secondary rounded-lg p-0.5">
+            {([
+              { id: 0 as OverlayDismissDelay, label: "Instant" },
+              { id: 3 as OverlayDismissDelay, label: "3s" },
+              { id: 5 as OverlayDismissDelay, label: "5s" },
+              { id: -1 as OverlayDismissDelay, label: "Keep" },
+            ]).map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => onOverlayDismissDelayChange(opt.id)}
+                className={`px-2.5 py-1 rounded-md text-xs transition-colors ${
+                  overlayDismissDelay === opt.id
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {opt.label}
               </button>
             ))}
           </div>

@@ -63,6 +63,8 @@ pub fn run() {
             commands::start_recording,
             commands::stop_recording,
             commands::cancel_recording,
+            commands::start_overlay_dismiss_monitor,
+            commands::stop_overlay_dismiss_monitor,
             commands::get_current_hotkey,
             commands::set_hotkey,
             commands::check_microphone_permission,

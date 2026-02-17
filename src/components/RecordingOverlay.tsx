@@ -181,6 +181,10 @@ export default function RecordingOverlay({ status }: Props) {
   const [accentKey, setAccentKey] = useState(() => localStorage.getItem("accentColor") || "orange");
   const isMac = navigator.userAgent.includes("Mac");
   const [hotkey, setHotkey] = useState(isMac ? "Alt+Space" : "Ctrl+Shift+Space");
+  const [dismissDelay, setDismissDelay] = useState(() => {
+    const stored = parseInt(localStorage.getItem("overlayDismissDelay") || "");
+    return [-1, 0, 3, 5].includes(stored) ? stored : 3;
+  });
   // Sync settings cross-window via tauri store onKeyChange
   useEffect(() => {
     let cleanups: (() => void)[] = [];
@@ -191,6 +195,8 @@ export default function RecordingOverlay({ status }: Props) {
       if (savedAccent) setAccentKey(savedAccent);
       const savedTheme = await store.get<string>("overlayTheme");
       if (savedTheme) setTheme(savedTheme as OverlayTheme);
+      const savedDelay = await store.get<number>("overlayDismissDelay");
+      if (savedDelay != null) setDismissDelay(savedDelay);
 
       const u1 = await store.onKeyChange<string>("overlayTheme", (v) => {
         if (v) setTheme(v as OverlayTheme);
@@ -207,7 +213,10 @@ export default function RecordingOverlay({ status }: Props) {
       const u4 = await store.onKeyChange<string>("hotkey", (v) => {
         if (v) setHotkey(v);
       });
-      cleanups = [u1, u2, u3, u4];
+      const u5 = await store.onKeyChange<number>("overlayDismissDelay", (v) => {
+        if (v != null) setDismissDelay(v);
+      });
+      cleanups = [u1, u2, u3, u4, u5];
     });
     return () => { cleanups.forEach((fn) => fn()); };
   }, []);
@@ -228,6 +237,7 @@ export default function RecordingOverlay({ status }: Props) {
     const win = getCurrentWebviewWindow();
 
     if (status === "recording") {
+      invoke("stop_overlay_dismiss_monitor").catch(() => {});
       const setup = IS_MAC
         ? invoke("set_overlay_corner_radius", { radius: config.nativeRadius })
         : Promise.resolve();
@@ -247,14 +257,19 @@ export default function RecordingOverlay({ status }: Props) {
       setAmplitudes([]);
 
       const hasText = transcribedTextRef.current;
-      const showText = hasText && (theme === "default" || theme === "glass");
-      if (showText) {
-        // Keep overlay visible, auto-hide after 3s
+      const showText = hasText && dismissDelay !== 0 && (theme === "default" || theme === "glass");
+      if (showText && dismissDelay > 0) {
+        // Auto-hide after delay, Esc to dismiss early
+        invoke("start_overlay_dismiss_monitor").catch(() => {});
         autoHideTimerRef.current = setTimeout(() => {
+          invoke("stop_overlay_dismiss_monitor").catch(() => {});
           transcribedTextRef.current = null;
           setTranscribedText(null);
           win.hide();
-        }, 3000);
+        }, dismissDelay * 1000);
+      } else if (showText && dismissDelay === -1) {
+        // Keep visible until next recording or Esc
+        invoke("start_overlay_dismiss_monitor").catch(() => {});
       } else {
         transcribedTextRef.current = null;
         setTranscribedText(null);
@@ -266,7 +281,7 @@ export default function RecordingOverlay({ status }: Props) {
       if (timerRef.current) clearInterval(timerRef.current);
       if (autoHideTimerRef.current) { clearTimeout(autoHideTimerRef.current); autoHideTimerRef.current = null; }
     };
-  }, [status, theme]);
+  }, [status, theme, dismissDelay]);
 
   useEffect(() => {
     const unlisten = listen<number>("audio-amplitude", (event) => {
@@ -290,6 +305,17 @@ export default function RecordingOverlay({ status }: Props) {
     return () => { unlisten.then((fn) => fn()); };
   }, []);
 
+  useEffect(() => {
+    const win = getCurrentWebviewWindow();
+    const unlisten = listen("overlay-dismiss", () => {
+      if (autoHideTimerRef.current) { clearTimeout(autoHideTimerRef.current); autoHideTimerRef.current = null; }
+      transcribedTextRef.current = null;
+      setTranscribedText(null);
+      win.hide();
+    });
+    return () => { unlisten.then((fn) => fn()); };
+  }, []);
+
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
@@ -309,7 +335,9 @@ export default function RecordingOverlay({ status }: Props) {
           </p>
         </div>
         <div className={`flex items-center justify-center text-xs ${isGlass ? "text-white/50" : "text-muted-foreground"}`}>
-          <span className="text-[11px]">Copied to clipboard</span>
+          <span className="text-[11px]">
+            Copied to clipboard{dismissDelay !== 0 ? " · Esc to dismiss" : ""}
+          </span>
         </div>
       </div>
     );

@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   NavItem, applyTheme, applyAccent,
   type Section, type ThemeMode, type AccentColor, type StartSound,
-  type OverlayTheme, type OverlayPosition, type PermissionStatus,
+  type OverlayTheme, type OverlayPosition, type OverlayDismissDelay, type PermissionStatus,
   type ModelStatusEntry, type DownloadProgress, type UpdateStatus,
 } from "./settings/shared";
 import GeneralPage from "./settings/GeneralPage";
@@ -48,6 +48,7 @@ export default function Settings() {
   const [accentColor, setAccentColor] = useState<AccentColor>("orange");
   const [overlayPosition, setOverlayPosition] = useState<OverlayPosition>("top-center");
   const [overlayTheme, setOverlayTheme] = useState<OverlayTheme>("default");
+  const [overlayDismissDelay, setOverlayDismissDelay] = useState<OverlayDismissDelay>(3);
   const [testingMic, setTestingMic] = useState(false);
   const [models, setModels] = useState<ModelStatusEntry[]>([]);
   const [liveModel, setLiveModel] = useState("parakeet-tdt-0.6b-v3");
@@ -306,6 +307,12 @@ export default function Settings() {
         localStorage.setItem("overlayTheme", savedOverlayTheme);
       }
 
+      const savedDismissDelay = await store.get<OverlayDismissDelay>("overlayDismissDelay");
+      if (savedDismissDelay != null) {
+        setOverlayDismissDelay(savedDismissDelay);
+        localStorage.setItem("overlayDismissDelay", String(savedDismissDelay));
+      }
+
       const savedPasteMode = await store.get<"auto" | "clipboard">("pasteMode");
       if (savedPasteMode) {
         setPasteMode(savedPasteMode);
@@ -416,6 +423,17 @@ export default function Settings() {
       await store.set("overlayTheme", theme);
     } catch (e) {
       console.error("Failed to save overlay theme:", e);
+    }
+  };
+
+  const handleOverlayDismissDelayChange = async (delay: OverlayDismissDelay) => {
+    setOverlayDismissDelay(delay);
+    localStorage.setItem("overlayDismissDelay", String(delay));
+    try {
+      const store = await load("settings.json");
+      await store.set("overlayDismissDelay", delay);
+    } catch (e) {
+      console.error("Failed to save overlay dismiss delay:", e);
     }
   };
 
@@ -612,6 +630,8 @@ export default function Settings() {
             onAccentChange={handleAccentChange}
             onOverlayPositionChange={handleOverlayPositionChange}
             onOverlayThemeChange={handleOverlayThemeChange}
+            overlayDismissDelay={overlayDismissDelay}
+            onOverlayDismissDelayChange={handleOverlayDismissDelayChange}
           />
         );
       case "permissions":
@@ -742,7 +762,7 @@ export default function Settings() {
         )}
         <div className="px-3 pb-3">
           <p className="text-[11px] text-muted-foreground/50 px-3">
-            AudioShift v1.1.2
+            AudioShift v1.1.3
           </p>
         </div>
       </div>

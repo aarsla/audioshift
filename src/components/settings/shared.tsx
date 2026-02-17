@@ -14,6 +14,7 @@ export type OverlayPosition =
   | "top-left" | "top-center" | "top-right"
   | "center-left" | "center" | "center-right"
   | "bottom-left" | "bottom-center" | "bottom-right";
+export type OverlayDismissDelay = -1 | 0 | 3 | 5;
 export type UpdateStatus = "idle" | "checking" | "available" | "downloading" | "up-to-date" | "error" | "restart-pending";
 
 export interface ModelStatusEntry {

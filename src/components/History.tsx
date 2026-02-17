@@ -99,13 +99,11 @@ function getTitle(entry: HistoryEntry): string {
 }
 
 function getPageNumbers(current: number, total: number): (number | "ellipsis")[] {
-  if (total <= 5) return Array.from({ length: total }, (_, i) => i);
+  if (total <= 3) return Array.from({ length: total }, (_, i) => i);
   const pages: (number | "ellipsis")[] = [0];
-  if (current > 2) pages.push("ellipsis");
-  for (let i = Math.max(1, current - 1); i <= Math.min(total - 2, current + 1); i++) {
-    pages.push(i);
-  }
-  if (current < total - 3) pages.push("ellipsis");
+  if (current > 1) pages.push("ellipsis");
+  if (current > 0 && current < total - 1) pages.push(current);
+  if (current < total - 2) pages.push("ellipsis");
   pages.push(total - 1);
   return pages;
 }
@@ -362,7 +360,7 @@ export default function History() {
 
         <SidebarFooter>
           <Pagination className="mx-0 w-auto">
-            <PaginationContent className="gap-0.5">
+            <PaginationContent className="gap-0 flex-nowrap">
               <PaginationItem>
                 <PaginationPrevious
                   onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(0, p - 1)); }}
@@ -373,7 +371,7 @@ export default function History() {
               {getPageNumbers(page, totalPages).map((p, i) =>
                 p === "ellipsis" ? (
                   <PaginationItem key={`e${i}`}>
-                    <PaginationEllipsis className="h-7 w-7 [&>svg]:size-3.5" />
+                    <PaginationEllipsis className="h-7 w-5 [&>svg]:size-3" />
                   </PaginationItem>
                 ) : (
                   <PaginationItem key={p}>

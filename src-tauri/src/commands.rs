@@ -168,6 +168,16 @@ pub async fn cancel_recording(
 }
 
 #[tauri::command]
+pub fn start_overlay_dismiss_monitor(app: tauri::AppHandle) {
+    escape_monitor::start_dismiss(&app);
+}
+
+#[tauri::command]
+pub fn stop_overlay_dismiss_monitor() {
+    escape_monitor::stop_dismiss();
+}
+
+#[tauri::command]
 pub fn get_current_hotkey(state: tauri::State<'_, AppState>) -> String {
     state.hotkey()
 }
