@@ -30,6 +30,17 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface HistoryEntry {
   id: string;
@@ -103,7 +114,6 @@ export default function History() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [copied, setCopied] = useState(false);
-  const [clearing, setClearing] = useState(false);
   const [page, setPage] = useState(0);
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "yesterday">(() => {
     const stored = localStorage.getItem("historyDateFilter");
@@ -207,10 +217,6 @@ export default function History() {
   };
 
   const handleClearAll = async () => {
-    if (!clearing) {
-      setClearing(true);
-      return;
-    }
     try {
       await invoke("clear_history");
       setEntries([]);
@@ -218,7 +224,6 @@ export default function History() {
     } catch (e) {
       console.error("Failed to clear history:", e);
     }
-    setClearing(false);
   };
 
   const handleCopy = async (text: string) => {
@@ -230,12 +235,6 @@ export default function History() {
       console.error("Failed to copy:", e);
     }
   };
-
-  useEffect(() => {
-    if (!clearing) return;
-    const timeout = setTimeout(() => setClearing(false), 3000);
-    return () => clearTimeout(timeout);
-  }, [clearing]);
 
   return (
     <SidebarProvider
@@ -399,16 +398,30 @@ export default function History() {
               {filtered.length} {filtered.length === 1 ? "entry" : "entries"}
             </span>
             {entries.length > 0 && (
-              <button
-                onClick={handleClearAll}
-                className={`text-[11px] transition-colors ${
-                  clearing
-                    ? "text-destructive font-medium"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {clearing ? "Confirm Clear All?" : "Clear All"}
-              </button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+                    Clear All
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Clear all history?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete all {entries.length} {entries.length === 1 ? "transcription" : "transcriptions"} and their audio recordings. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleClearAll}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Clear All
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         </SidebarFooter>
@@ -437,24 +450,55 @@ export default function History() {
                       {selected.window_title && ` — ${selected.window_title}`}
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleCopy(selected.text)}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md
-                               bg-secondary border border-border hover:bg-accent
-                               text-muted-foreground transition-colors shrink-0"
-                  >
-                    {copied ? <Check size={12} /> : <Copy size={12} />}
-                    {copied ? "Copied" : "Copy"}
-                  </button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md
+                                   border border-destructive/30 text-destructive
+                                   hover:bg-destructive/10 transition-colors shrink-0"
+                      >
+                        <Trash2 size={12} />
+                        Delete
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete transcription?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete this transcription and its audio recording. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(selected.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
 
                 <Separator />
 
                 {/* Text */}
                 <div>
-                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                    Transcribed Text
-                  </h3>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Transcribed Text
+                    </h3>
+                    <button
+                      onClick={() => handleCopy(selected.text)}
+                      className="flex items-center gap-1.5 px-2 py-1 text-xs rounded-md
+                                 bg-secondary border border-border hover:bg-accent
+                                 text-muted-foreground transition-colors"
+                    >
+                      {copied ? <Check size={12} /> : <Copy size={12} />}
+                      {copied ? "Copied" : "Copy"}
+                    </button>
+                  </div>
                   <div className="bg-card border border-border rounded-lg p-4">
                     <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                       {selected.text}
@@ -548,18 +592,6 @@ export default function History() {
                   </div>
                 )}
 
-                {/* Delete */}
-                <div>
-                  <button
-                    onClick={() => handleDelete(selected.id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md
-                               border border-destructive/30 text-destructive
-                               hover:bg-destructive/10 transition-colors"
-                  >
-                    <Trash2 size={12} />
-                    Delete Entry
-                  </button>
-                </div>
               </div>
             </ScrollArea>
           ) : (
