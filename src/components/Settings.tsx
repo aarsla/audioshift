@@ -7,10 +7,9 @@ import { enable, disable, isEnabled } from "@tauri-apps/plugin-autostart";
 import {
   Mic, ClipboardPaste, Info,
   Settings as SettingsIcon, Shield, Palette,
-  Clock, Download, Box,
+  Download, Box,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import History from "@/components/History";
 import {
   NavItem, applyTheme, applyAccent,
   type Section, type ThemeMode, type AccentColor, type StartSound,
@@ -429,6 +428,7 @@ export default function Settings() {
     } catch (e) {
       console.error("Failed to save theme:", e);
     }
+    invoke("emit_to_all", { event: "theme-changed", payload: { mode, accent: accentColor } });
   };
 
   const handleAccentChange = async (accent: AccentColor) => {
@@ -441,6 +441,7 @@ export default function Settings() {
     } catch (e) {
       console.error("Failed to save accent:", e);
     }
+    invoke("emit_to_all", { event: "theme-changed", payload: { mode: themeMode, accent } });
   };
 
   const handleDeviceChange = async (device: string) => {
@@ -576,7 +577,6 @@ export default function Settings() {
     { id: "recording", label: "Recording", icon: <Mic size={16} /> },
     { id: "model", label: "Transcription", icon: <Box size={16} /> },
     { id: "output", label: "Output", icon: <ClipboardPaste size={16} /> },
-    ...(saveHistory ? [{ id: "history" as Section, label: "History", icon: <Clock size={16} /> }] : []),
     { id: "appearance", label: "Appearance", icon: <Palette size={16} /> },
     ...(!isMas ? [{ id: "updates" as Section, label: "Updates", icon: <Download size={16} /> }] : []),
     ...(isMac ? [{ id: "permissions" as Section, label: "Permissions", icon: <Shield size={16} /> }] : []),
@@ -741,36 +741,22 @@ export default function Settings() {
       </div>
 
       {/* Content */}
-      {activeSection === "history" ? (
-        <div className="flex-1 flex flex-col min-h-0">
-          <div className="px-6 pt-3 pb-1" data-tauri-drag-region>
-            <div className="flex items-center gap-2.5 pt-5 mb-4">
-              <span className="text-primary"><Clock size={18} /></span>
-              <h2 className="text-xl font-semibold text-foreground">History</h2>
-            </div>
-          </div>
-          <div className="flex-1 min-h-0 overflow-hidden">
-            <History />
-          </div>
+      <ScrollArea className="flex-1">
+        <div className="px-6 pt-3 pb-1" data-tauri-drag-region>
+          {(() => {
+            const nav = navItems.find((n) => n.id === activeSection);
+            return nav ? (
+              <div className="flex items-center gap-2.5 pt-5 mb-4">
+                <span className="text-primary [&>svg]:size-[18px]">{nav.icon}</span>
+                <h2 className="text-xl font-semibold text-foreground">{nav.label}</h2>
+              </div>
+            ) : null;
+          })()}
         </div>
-      ) : (
-        <ScrollArea className="flex-1">
-          <div className="px-6 pt-3 pb-1" data-tauri-drag-region>
-            {(() => {
-              const nav = navItems.find((n) => n.id === activeSection);
-              return nav ? (
-                <div className="flex items-center gap-2.5 pt-5 mb-4">
-                  <span className="text-primary [&>svg]:size-[18px]">{nav.icon}</span>
-                  <h2 className="text-xl font-semibold text-foreground">{nav.label}</h2>
-                </div>
-              ) : null;
-            })()}
-          </div>
-          <div className="px-6 pb-6">
-            {renderPage()}
-          </div>
-        </ScrollArea>
-      )}
+        <div className="px-6 pb-6">
+          {renderPage()}
+        </div>
+      </ScrollArea>
     </div>
   );
 }

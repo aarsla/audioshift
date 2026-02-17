@@ -46,6 +46,13 @@ extern "C" fn open_settings(_this: *mut AnyObject, _cmd: Sel, _sender: *mut AnyO
     }
 }
 
+/// Action handler for the "History" menu item.
+extern "C" fn open_history(_this: *mut AnyObject, _cmd: Sel, _sender: *mut AnyObject) {
+    if let Some(handle) = APP_HANDLE.get() {
+        let _ = crate::windows::create_history_window(handle);
+    }
+}
+
 pub fn setup_dock_menu(handle: &AppHandle) {
     let _ = APP_HANDLE.set(handle.clone());
 
@@ -63,6 +70,17 @@ pub fn setup_dock_menu(handle: &AppHandle) {
             &key,
         )
     };
+    let history_title = NSString::from_str("History");
+    let history_key = NSString::new();
+    let history_item = unsafe {
+        NSMenuItem::initWithTitle_action_keyEquivalent(
+            NSMenuItem::alloc(mtm),
+            &history_title,
+            Some(sel!(dockOpenHistory:)),
+            &history_key,
+        )
+    };
+    menu.addItem(&history_item);
     menu.addItem(&settings_item);
 
     // Store as raw pointer (leaked, lives for app lifetime)
@@ -101,7 +119,16 @@ pub fn setup_dock_menu(handle: &AppHandle) {
             c"v@:@".as_ptr(),
         );
 
-        // Set the delegate as the target for the menu item so the action resolves
+        // Add dockOpenHistory: action handler
+        class_addMethod(
+            delegate_class,
+            sel!(dockOpenHistory:),
+            open_history as *const core::ffi::c_void,
+            c"v@:@".as_ptr(),
+        );
+
+        // Set the delegate as the target for menu items so actions resolve
         let _: () = msg_send![&*settings_item, setTarget: delegate];
+        let _: () = msg_send![&*history_item, setTarget: delegate];
     }
 }

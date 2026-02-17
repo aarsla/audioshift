@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main", "overlay", "settings", "onboarding"],
+  "windows": ["main", "overlay", "settings", "onboarding", "history"],
   "permissions": [
     "core:default",
     "core:event:default",
@@ -23,6 +23,7 @@
     "core:window:allow-set-size",
     "core:window:allow-outer-position",
     "core:window:allow-outer-size",
-    "core:window:allow-scale-factor"
+    "core:window:allow-scale-factor",
+    "updater:default"
   ]
 }

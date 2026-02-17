@@ -161,12 +161,15 @@ pub fn build_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>
         .build(app)?;
     let settings_item =
         MenuItemBuilder::with_id("settings", "Settings").build(app)?;
+    let history_item =
+        MenuItemBuilder::with_id("history", "History").build(app)?;
     let quit_item = MenuItemBuilder::with_id("quit", "Quit AudioShift").build(app)?;
 
     #[allow(unused_mut)]
     let mut menu_builder = MenuBuilder::new(app)
         .item(&status_item)
         .separator()
+        .item(&history_item)
         .item(&settings_item);
 
     #[cfg(feature = "updater")]
@@ -174,7 +177,7 @@ pub fn build_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>
         MenuItemBuilder::with_id("updates", "Check for Updates...").build(app)?;
     #[cfg(feature = "updater")]
     {
-        menu_builder = menu_builder.item(&updates_item);
+        menu_builder = menu_builder.separator().item(&updates_item);
     }
 
     let menu = menu_builder
@@ -191,6 +194,9 @@ pub fn build_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>
         .on_menu_event(move |app, event| match event.id().as_ref() {
             "settings" => {
                 let _ = windows::create_settings_window(app);
+            }
+            "history" => {
+                let _ = windows::create_history_window(app);
             }
             #[cfg(feature = "updater")]
             "updates" => {

@@ -91,6 +91,46 @@ pub fn create_settings_window(app: &tauri::AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
+pub fn create_history_window(app: &tauri::AppHandle) -> tauri::Result<()> {
+    if let Some(win) = app.get_webview_window("history") {
+        let _ = win.show();
+        let _ = win.set_focus();
+        return Ok(());
+    }
+
+    let mut builder = WebviewWindowBuilder::new(app, "history", WebviewUrl::App("/history".into()))
+        .title("AudioShift History")
+        .min_inner_size(800.0, 600.0)
+        .resizable(true)
+        .background_color(Color(32, 32, 32, 255));
+
+    // Restore saved geometry or center with defaults
+    let store = app.store("settings.json").ok();
+    let geom = store.as_ref().and_then(|s| {
+        let x = s.get("historyGeometry")?;
+        let obj = x.as_object()?;
+        Some((
+            obj.get("x")?.as_f64()?,
+            obj.get("y")?.as_f64()?,
+            obj.get("w")?.as_f64()?,
+            obj.get("h")?.as_f64()?,
+        ))
+    });
+
+    if let Some((x, y, w, h)) = geom {
+        builder = builder
+            .inner_size(w, h)
+            .position(x, y);
+    } else {
+        builder = builder
+            .inner_size(800.0, 600.0)
+            .center();
+    }
+
+    builder.build()?;
+    Ok(())
+}
+
 pub fn create_onboarding_window(app: &tauri::AppHandle) -> tauri::Result<()> {
     if let Some(win) = app.get_webview_window("onboarding") {
         let _ = win.show();

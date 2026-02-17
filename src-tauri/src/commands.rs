@@ -4,6 +4,37 @@ use tauri::{Emitter, Manager};
 use tauri_plugin_store::StoreExt;
 
 #[tauri::command]
+pub fn emit_to_all(app: tauri::AppHandle, event: String, payload: Option<serde_json::Value>) {
+    match payload {
+        Some(p) => { let _ = app.emit(&event, p); }
+        None => { let _ = app.emit(&event, ()); }
+    }
+}
+
+#[tauri::command]
+pub fn get_theme_settings(app: tauri::AppHandle) -> (String, String) {
+    let store = app.store("settings.json").ok();
+    let mode = store
+        .as_ref()
+        .and_then(|s| s.get("themeMode"))
+        .and_then(|v| v.as_str().map(String::from))
+        .unwrap_or_else(|| "system".to_string());
+    let accent = store
+        .as_ref()
+        .and_then(|s| s.get("accentColor"))
+        .and_then(|v| v.as_str().map(String::from))
+        .unwrap_or_else(|| "orange".to_string());
+    (mode, accent)
+}
+
+#[tauri::command]
+pub fn save_window_geometry(app: tauri::AppHandle, key: String, x: f64, y: f64, w: f64, h: f64) {
+    if let Ok(store) = app.store("settings.json") {
+        store.set(&key, serde_json::json!({ "x": x, "y": y, "w": w, "h": h }));
+    }
+}
+
+#[tauri::command]
 pub fn get_input_devices() -> Vec<String> {
     recorder::list_input_devices()
 }

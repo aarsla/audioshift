@@ -53,6 +53,9 @@ pub fn run() {
     builder
         .manage(AppState::new())
         .invoke_handler(tauri::generate_handler![
+            commands::emit_to_all,
+            commands::get_theme_settings,
+            commands::save_window_geometry,
             commands::get_input_devices,
             commands::start_monitor,
             commands::stop_monitor,

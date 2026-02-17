@@ -2,17 +2,20 @@ import { useEffect, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { load } from "@tauri-apps/plugin-store";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import RecordingOverlay from "./components/RecordingOverlay";
 import Settings from "./components/Settings";
 import Onboarding from "./components/Onboarding";
+import History from "./components/History";
 
-type Route = "overlay" | "settings" | "onboarding" | "empty";
+type Route = "overlay" | "settings" | "onboarding" | "history" | "empty";
 
 function getRoute(): Route {
   const path = window.location.pathname;
   if (path === "/overlay") return "overlay";
   if (path === "/settings") return "settings";
   if (path === "/onboarding") return "onboarding";
+  if (path === "/history") return "history";
   return "empty";
 }
 
@@ -64,12 +67,86 @@ async function initTheme() {
   }
 }
 
+function HistoryWindow() {
+  useEffect(() => {
+    const win = getCurrentWebviewWindow();
+    let timer: ReturnType<typeof setTimeout>;
+
+    const doSave = async () => {
+      try {
+        const pos = await win.outerPosition();
+        const size = await win.outerSize();
+        const factor = await win.scaleFactor();
+        await invoke("save_window_geometry", {
+          key: "historyGeometry",
+          x: pos.x / factor,
+          y: pos.y / factor,
+          w: size.width / factor,
+          h: size.height / factor,
+        });
+      } catch (e) {
+        console.error("Failed to save history geometry:", e);
+      }
+    };
+
+    const saveDebounced = () => {
+      clearTimeout(timer);
+      timer = setTimeout(doSave, 500);
+    };
+
+    const u1 = win.onMoved(saveDebounced);
+    const u2 = win.onResized(saveDebounced);
+    return () => {
+      clearTimeout(timer);
+      u1.then((fn) => fn());
+      u2.then((fn) => fn());
+    };
+  }, []);
+
+  return (
+    <div className="h-screen bg-background">
+      <History />
+    </div>
+  );
+}
+
 export default function App() {
   const route = getRoute();
   const [status, setStatus] = useState<string>("idle");
 
   useEffect(() => {
     initTheme();
+
+    // Re-apply theme from Rust store on focus (picks up changes from Settings window)
+    const win = getCurrentWebviewWindow();
+    const unlistenFocus = win.onFocusChanged(async ({ payload: focused }) => {
+      if (!focused) return;
+      try {
+        const [mode, accent] = await invoke<[string, string]>("get_theme_settings");
+        const root = document.documentElement;
+        let isDark: boolean;
+        if (mode === "dark") { root.classList.add("dark"); isDark = true; }
+        else if (mode === "light") { root.classList.remove("dark"); isDark = false; }
+        else { isDark = window.matchMedia("(prefers-color-scheme: dark)").matches; root.classList.toggle("dark", isDark); }
+        applyAccentVars(accent, isDark);
+      } catch {}
+    });
+
+    // Also listen for real-time event from Settings
+    const unlistenEvent = listen<{ mode: string; accent: string }>("theme-changed", (event) => {
+      const { mode, accent } = event.payload;
+      const root = document.documentElement;
+      let isDark: boolean;
+      if (mode === "dark") { root.classList.add("dark"); isDark = true; }
+      else if (mode === "light") { root.classList.remove("dark"); isDark = false; }
+      else { isDark = window.matchMedia("(prefers-color-scheme: dark)").matches; root.classList.toggle("dark", isDark); }
+      applyAccentVars(accent || "orange", isDark);
+    });
+
+    return () => {
+      unlistenFocus.then((fn) => fn());
+      unlistenEvent.then((fn) => fn());
+    };
   }, []);
 
   useEffect(() => {
@@ -124,6 +201,8 @@ export default function App() {
       return <Settings />;
     case "onboarding":
       return <Onboarding />;
+    case "history":
+      return <HistoryWindow />;
     default:
       return null;
   }

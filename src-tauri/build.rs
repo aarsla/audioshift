@@ -63,7 +63,7 @@ fn main() {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main", "overlay", "settings", "onboarding"],
+  "windows": ["main", "overlay", "settings", "onboarding", "history"],
   "permissions": [
 {}
   ]
