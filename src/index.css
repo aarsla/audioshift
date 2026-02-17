@@ -133,3 +133,8 @@ html, body, #root {
     display: none;
   }
 }
+
+@keyframes transcribe-bounce {
+  0% { transform: translateY(2px); opacity: 0.4; }
+  100% { transform: translateY(-2px); opacity: 1; }
+}

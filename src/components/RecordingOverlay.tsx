@@ -317,15 +317,29 @@ export default function RecordingOverlay({ status }: Props) {
 
   if (status === "transcribing") {
     const isSmall = theme === "compact" || theme === "minimal";
+    const isGlass = theme === "glass";
+    const dotRgb = isGlass ? waveformColor : (ACCENT_RGB[accentKey] || ACCENT_RGB.orange);
+    const dotSize = isSmall ? "w-1.5 h-1.5" : "w-2 h-2";
     return (
       <div
         className={`flex items-center justify-center h-full px-4 select-none ${config.containerClass}`}
-
         data-tauri-drag-region
       >
-        <div className={`flex items-center gap-2 text-foreground ${isSmall ? "text-xs" : "text-sm"}`}>
-          <div className={`${isSmall ? "w-3 h-3" : "w-4 h-4"} border-2 border-muted-foreground border-t-transparent rounded-full animate-spin`} />
-          {!isSmall && "Transcribing..."}
+        <div className={`flex flex-col items-center gap-1.5 ${isGlass ? "text-white/80" : "text-foreground"} ${isSmall ? "text-xs" : "text-sm"}`}>
+          <div className="flex items-center gap-1">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className={`${dotSize} rounded-full`}
+                style={{
+                  backgroundColor: `rgb(${dotRgb})`,
+                  animation: "transcribe-bounce 0.6s ease-in-out infinite alternate",
+                  animationDelay: `${i * 0.15}s`,
+                }}
+              />
+            ))}
+          </div>
+          {!isSmall && <span className="text-muted-foreground text-[11px]">Transcribing</span>}
         </div>
       </div>
     );
