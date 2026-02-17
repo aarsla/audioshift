@@ -5,7 +5,7 @@ import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { load } from "@tauri-apps/plugin-store";
 import { enable, disable, isEnabled } from "@tauri-apps/plugin-autostart";
 import {
-  Mic, ClipboardPaste, Info,
+  Mic, ClipboardPaste, Info, Clock,
   Settings as SettingsIcon, Shield, Palette,
   Download, Box,
 } from "lucide-react";
@@ -23,6 +23,7 @@ import RecordingPage from "./settings/RecordingPage";
 import OutputPage from "./settings/OutputPage";
 import ModelPage from "./settings/ModelPage";
 import AboutPage from "./settings/AboutPage";
+import HistoryPage from "./settings/HistoryPage";
 import UpdatesPage from "./settings/UpdatesPage";
 export default function Settings() {
   const [activeSection, setActiveSection] = useState<Section>("general");
@@ -578,6 +579,7 @@ export default function Settings() {
     { id: "model", label: "Transcription", icon: <Box size={16} /> },
     { id: "output", label: "Output", icon: <ClipboardPaste size={16} /> },
     { id: "appearance", label: "Appearance", icon: <Palette size={16} /> },
+    { id: "history", label: "History", icon: <Clock size={16} /> },
     ...(!isMas ? [{ id: "updates" as Section, label: "Updates", icon: <Download size={16} /> }] : []),
     ...(isMac ? [{ id: "permissions" as Section, label: "Permissions", icon: <Shield size={16} /> }] : []),
     { id: "about", label: "About", icon: <Info size={16} /> },
@@ -593,12 +595,10 @@ export default function Settings() {
             autostart={autostart}
             showInDock={showInDock}
             startSound={startSound}
-            saveHistory={saveHistory}
             isMas={isMas}
             onAutostartChange={handleAutostartChange}
             onDockChange={handleDockChange}
             onStartSoundChange={handleStartSoundChange}
-            onSaveHistoryChange={handleSaveHistoryChange}
           />
         );
       case "appearance":
@@ -658,6 +658,13 @@ export default function Settings() {
             onLiveModelChange={handleLiveModelChange}
             onLanguageChange={handleLanguageChange}
             onTranslateChange={handleTranslateChange}
+          />
+        );
+      case "history":
+        return (
+          <HistoryPage
+            saveHistory={saveHistory}
+            onSaveHistoryChange={handleSaveHistoryChange}
           />
         );
       case "updates":
