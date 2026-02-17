@@ -78,7 +78,7 @@ Version is hardcoded in 5 files — `make release` updates all of them: `package
 
 ### Release commits
 
-When Claude makes a release, don't use `make release`. Instead: run the sed/cargo commands to bump versions, then commit with a changelog:
+When Claude makes a release, don't use `make release`. Instead: run the sed/cargo commands to bump versions, then commit with a changelog. **Include `src-tauri/Cargo.lock` in the release commit** (it changes when `Cargo.toml` version is bumped):
 
 ```
 v1.0.7
