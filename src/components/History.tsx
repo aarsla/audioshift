@@ -5,6 +5,7 @@ import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { Search, Copy, Trash2, Check, X, FileText, FolderOpen, TriangleAlert, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -123,7 +124,10 @@ export default function History() {
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     return localStorage.getItem("historySidebarOpen") !== "false";
   });
-  const PAGE_SIZE = 15;
+  const [pageSize, setPageSize] = useState(() => {
+    const stored = parseInt(localStorage.getItem("historyPageSize") || "");
+    return [10, 20, 30].includes(stored) ? stored : 10;
+  });
 
   const loadEntries = async () => {
     try {
@@ -181,10 +185,10 @@ export default function History() {
     return result;
   }, [entries, search, dateFilter]);
 
-  useEffect(() => { setPage(0); }, [search, dateFilter]);
+  useEffect(() => { setPage(0); }, [search, dateFilter, pageSize]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paged = filtered.slice(page * pageSize, (page + 1) * pageSize);
 
   const grouped = useMemo(() => {
     const groups: { label: string; entries: HistoryEntry[] }[] = [];
@@ -393,14 +397,33 @@ export default function History() {
               </PaginationItem>
             </PaginationContent>
           </Pagination>
+          <Separator />
           <div className="flex items-center justify-between px-1">
-            <span className="text-[11px] text-muted-foreground">
-              {filtered.length} {filtered.length === 1 ? "entry" : "entries"}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-muted-foreground">
+                {filtered.length} {filtered.length === 1 ? "entry" : "entries"}
+              </span>
+              <span className="text-[11px] text-muted-foreground/40">|</span>
+              <Select
+                value={String(pageSize)}
+                onValueChange={(v) => { const n = parseInt(v); setPageSize(n); localStorage.setItem("historyPageSize", v); }}
+              >
+                <SelectTrigger className="h-6 w-[52px] text-[11px] px-2 gap-1 border-0 bg-transparent shadow-none text-muted-foreground hover:text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side="top" align="start">
+                  {[10, 20, 30].map((n) => (
+                    <SelectItem key={n} value={String(n)} className="text-xs">
+                      {n}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             {entries.length > 0 && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <button className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+                  <button className="text-[11px] px-2 py-0.5 rounded-md border border-border bg-secondary text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
                     Clear All
                   </button>
                 </AlertDialogTrigger>
