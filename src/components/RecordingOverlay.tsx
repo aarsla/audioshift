@@ -154,6 +154,16 @@ const ACCENT_RGB: Record<string, string> = {
 };
 
 
+function truncateMiddle(text: string, maxChars: number): string {
+  const trimmed = text.replace(/\s+/g, " ").trim();
+  if (trimmed.length <= maxChars) return trimmed;
+  const ellipsis = " \u2026 ";
+  const available = maxChars - ellipsis.length;
+  const startLen = Math.ceil(available * 0.6);
+  const endLen = available - startLen;
+  return trimmed.slice(0, startLen).trimEnd() + ellipsis + trimmed.slice(-endLen).trimStart();
+}
+
 interface Props {
   status: string;
 }
@@ -162,6 +172,9 @@ export default function RecordingOverlay({ status }: Props) {
   const [amplitudes, setAmplitudes] = useState<number[]>([]);
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [transcribedText, setTranscribedText] = useState<string | null>(null);
+  const transcribedTextRef = useRef<string | null>(null);
+  const autoHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [theme, setTheme] = useState<OverlayTheme>(
     () => (localStorage.getItem("overlayTheme") || "default") as OverlayTheme
   );
@@ -221,19 +234,37 @@ export default function RecordingOverlay({ status }: Props) {
       setup.then(() => positionOverlay(win, config.w, config.h)).then(() => win.show());
       setSeconds(0);
       setAmplitudes([]);
+      transcribedTextRef.current = null;
+      setTranscribedText(null);
+      if (autoHideTimerRef.current) { clearTimeout(autoHideTimerRef.current); autoHideTimerRef.current = null; }
       timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     } else if (status === "transcribing") {
       // Keep visible but stop timer
       if (timerRef.current) clearInterval(timerRef.current);
     } else {
-      win.hide();
       if (timerRef.current) clearInterval(timerRef.current);
       setSeconds(0);
       setAmplitudes([]);
+
+      const hasText = transcribedTextRef.current;
+      const showText = hasText && (theme === "default" || theme === "glass");
+      if (showText) {
+        // Keep overlay visible, auto-hide after 3s
+        autoHideTimerRef.current = setTimeout(() => {
+          transcribedTextRef.current = null;
+          setTranscribedText(null);
+          win.hide();
+        }, 3000);
+      } else {
+        transcribedTextRef.current = null;
+        setTranscribedText(null);
+        win.hide();
+      }
     }
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (autoHideTimerRef.current) { clearTimeout(autoHideTimerRef.current); autoHideTimerRef.current = null; }
     };
   }, [status, theme]);
 
@@ -249,11 +280,40 @@ export default function RecordingOverlay({ status }: Props) {
     };
   }, []);
 
+  useEffect(() => {
+    const unlisten = listen<string>("transcription-complete", (event) => {
+      if (event.payload) {
+        transcribedTextRef.current = event.payload;
+        setTranscribedText(event.payload);
+      }
+    });
+    return () => { unlisten.then((fn) => fn()); };
+  }, []);
+
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
+
+  if (transcribedText && (theme === "default" || theme === "glass") && status === "idle") {
+    const isGlass = theme === "glass";
+    return (
+      <div
+        className={`flex flex-col h-full px-4 py-3 select-none ${config.containerClass}`}
+        data-tauri-drag-region
+      >
+        <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
+          <p className={`text-xs leading-relaxed text-center line-clamp-3 ${isGlass ? "text-white/90" : "text-foreground"}`}>
+            {truncateMiddle(transcribedText, 90)}
+          </p>
+        </div>
+        <div className={`flex items-center justify-center text-xs ${isGlass ? "text-white/50" : "text-muted-foreground"}`}>
+          <span className="text-[11px]">Copied to clipboard</span>
+        </div>
+      </div>
+    );
+  }
 
   if (status === "transcribing") {
     const isSmall = theme === "compact" || theme === "minimal";
