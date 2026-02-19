@@ -90,6 +90,8 @@ pub fn run() {
             commands::get_translate_to_english,
             commands::set_translate_to_english,
             commands::is_download_in_progress,
+            commands::get_filler_words,
+            commands::set_filler_words,
             commands::restart_app,
             commands::set_overlay_corner_radius,
             commands::get_build_variant,

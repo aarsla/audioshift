@@ -7,7 +7,7 @@ import { enable, disable, isEnabled } from "@tauri-apps/plugin-autostart";
 import {
   Mic, ClipboardPaste, Info, Clock,
   Settings as SettingsIcon, Shield, Palette,
-  Download, Box,
+  Download, Box, MessageSquare,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -23,6 +23,7 @@ import RecordingPage from "./settings/RecordingPage";
 import OutputPage from "./settings/OutputPage";
 import ModelPage from "./settings/ModelPage";
 import AboutPage from "./settings/AboutPage";
+import FeedbackPage from "./settings/FeedbackPage";
 import HistoryPage from "./settings/HistoryPage";
 import UpdatesPage from "./settings/UpdatesPage";
 export default function Settings() {
@@ -59,6 +60,8 @@ export default function Settings() {
   const [translateToEnglish, setTranslateToEnglish] = useState(false);
   const [monitorLevel, setMonitorLevel] = useState(0);
   const [saveHistory, setSaveHistory] = useState(true);
+  const [removeFillerWords, setRemoveFillerWords] = useState(true);
+  const [fillerWords, setFillerWords] = useState<string[]>([]);
   const [buildVariant, setBuildVariant] = useState<"direct" | "mas">("direct");
   const monitorSmoothed = useRef(0);
   const monitorRaf = useRef(0);
@@ -86,6 +89,7 @@ export default function Settings() {
     invoke<string>("get_live_model").then(setLiveModel);
     invoke<string>("get_transcription_language").then(setTranscriptionLanguage);
     invoke<boolean>("get_translate_to_english").then(setTranslateToEnglish);
+    invoke<string[]>("get_filler_words").then(setFillerWords);
     checkPermissions();
     loadAppSettings();
 
@@ -328,6 +332,11 @@ export default function Settings() {
         setSaveHistory(savedSaveHistory);
       }
 
+      const savedRemoveFillerWords = await store.get<boolean>("removeFillerWords");
+      if (savedRemoveFillerWords !== null && savedRemoveFillerWords !== undefined) {
+        setRemoveFillerWords(savedRemoveFillerWords);
+      }
+
       const savedAutoUpdate = await store.get<boolean>("autoUpdate");
       if (savedAutoUpdate !== null && savedAutoUpdate !== undefined) {
         setAutoUpdate(savedAutoUpdate);
@@ -557,6 +566,27 @@ export default function Settings() {
     }
   };
 
+  const handleRemoveFillerWordsChange = async (enabled: boolean) => {
+    setRemoveFillerWords(enabled);
+    try {
+      const store = await load("settings.json");
+      await store.set("removeFillerWords", enabled);
+    } catch (e) {
+      console.error("Failed to save filler words setting:", e);
+    }
+  };
+
+  const handleFillerWordsChange = async (words: string[]) => {
+    const prev = fillerWords;
+    setFillerWords(words);
+    try {
+      await invoke("set_filler_words", { words });
+    } catch (e) {
+      console.error("Failed to save filler words:", e);
+      setFillerWords(prev);
+    }
+  };
+
   const handleAutoUpdateChange = async (enabled: boolean) => {
     setAutoUpdate(enabled);
     try {
@@ -600,6 +630,7 @@ export default function Settings() {
     { id: "history", label: "History", icon: <Clock size={16} /> },
     ...(!isMas ? [{ id: "updates" as Section, label: "Updates", icon: <Download size={16} /> }] : []),
     ...(isMac ? [{ id: "permissions" as Section, label: "Permissions", icon: <Shield size={16} /> }] : []),
+    { id: "feedback", label: "Feedback", icon: <MessageSquare size={16} /> },
     { id: "about", label: "About", icon: <Info size={16} /> },
   ];
 
@@ -661,6 +692,10 @@ export default function Settings() {
           <OutputPage
             pasteMode={pasteMode}
             onPasteModeChange={handlePasteModeChange}
+            removeFillerWords={removeFillerWords}
+            fillerWords={fillerWords}
+            onRemoveFillerWordsChange={handleRemoveFillerWordsChange}
+            onFillerWordsChange={handleFillerWordsChange}
           />
         );
       case "model":
@@ -704,6 +739,8 @@ export default function Settings() {
             onRestart={handleRestart}
           />
         );
+      case "feedback":
+        return <FeedbackPage />;
       case "about":
         return (
           <AboutPage

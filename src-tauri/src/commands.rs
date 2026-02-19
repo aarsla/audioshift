@@ -3,6 +3,25 @@ use crate::state::AppState;
 use tauri::{Emitter, Manager};
 use tauri_plugin_store::StoreExt;
 
+const DEFAULT_FILLER_WORDS: &[&str] = &[
+    "um", "uh", "er", "ah", "eh", "umm", "uhh", "err", "ahh", "ehh",
+    "hmm", "hm", "mm", "mmm", "erm", "urm", "ugh",
+];
+
+fn remove_filler_words(text: &str, fillers: &[String]) -> String {
+    if fillers.is_empty() {
+        return text.to_string();
+    }
+    // Build alternation: match whole words (case-insensitive), optionally followed by punctuation
+    let alts: Vec<String> = fillers.iter().map(|w| regex::escape(w)).collect();
+    let pattern = format!(r"(?i)\b(?:{})\b[,;:]?\s*", alts.join("|"));
+    let re = regex::Regex::new(&pattern).unwrap();
+    let result = re.replace_all(text, "").to_string();
+    // Collapse multiple spaces and trim
+    let result = regex::Regex::new(r"  +").unwrap().replace_all(&result, " ");
+    result.trim().to_string()
+}
+
 #[tauri::command]
 pub fn emit_to_all(app: tauri::AppHandle, event: String, payload: Option<serde_json::Value>) {
     match payload {
@@ -122,6 +141,25 @@ pub async fn stop_recording(
         .await
         .map_err(|e| e.to_string())?;
     let processing_time_ms = transcribe_start.elapsed().as_millis() as u64;
+
+    // Strip filler words if enabled
+    let text = {
+        let remove = store
+            .as_ref()
+            .and_then(|s| s.get("removeFillerWords"))
+            .and_then(|v| v.as_bool())
+            .unwrap_or(true);
+        if remove {
+            let fillers: Vec<String> = store
+                .as_ref()
+                .and_then(|s| s.get("fillerWords"))
+                .and_then(|v| serde_json::from_value(v.clone()).ok())
+                .unwrap_or_else(|| DEFAULT_FILLER_WORDS.iter().map(|s| s.to_string()).collect());
+            remove_filler_words(&text, &fillers)
+        } else {
+            text
+        }
+    };
 
     if !text.is_empty() {
         if save_history {
@@ -576,6 +614,8 @@ pub fn complete_onboarding(app: tauri::AppHandle) {
             "transcriptionLanguage": "auto",
             "translateToEnglish": false,
             "saveHistory": true,
+            "removeFillerWords": true,
+            "fillerWords": DEFAULT_FILLER_WORDS,
             "autoUpdate": true,
             "hotkey": crate::hotkey::default_hotkey(),
         });
@@ -652,6 +692,22 @@ pub fn set_overlay_corner_radius(window: tauri::WebviewWindow, radius: f64) -> R
     }
     #[cfg(not(target_os = "macos"))]
     let _ = (window, radius);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn get_filler_words(app: tauri::AppHandle) -> Vec<String> {
+    app.store("settings.json")
+        .ok()
+        .and_then(|s| s.get("fillerWords"))
+        .and_then(|v| serde_json::from_value(v.clone()).ok())
+        .unwrap_or_else(|| DEFAULT_FILLER_WORDS.iter().map(|s| s.to_string()).collect())
+}
+
+#[tauri::command]
+pub fn set_filler_words(app: tauri::AppHandle, words: Vec<String>) -> Result<(), String> {
+    let store = app.store("settings.json").map_err(|e| e.to_string())?;
+    store.set("fillerWords", serde_json::json!(words));
     Ok(())
 }
 
