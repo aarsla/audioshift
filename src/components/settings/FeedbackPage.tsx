@@ -12,6 +12,11 @@ export default function FeedbackPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setStatus("error");
+      setErrorText("Please enter a valid email address.");
+      return;
+    }
 
     setStatus("sending");
     setErrorText("");
@@ -45,6 +50,21 @@ export default function FeedbackPage() {
 
   return (
     <div className="space-y-4">
+      <SectionCard title="Support the Project" icon={<Star size={14} />}>
+        <div className="flex items-center justify-between gap-4 py-3">
+          <p className="text-sm text-muted-foreground">
+            If you enjoy AudioShift, a star on GitHub goes a long way!
+          </p>
+          <button
+            onClick={() => openUrl("https://github.com/aarsla/audioshift")}
+            className="shrink-0 inline-flex items-center gap-1.5 h-8 px-3 text-sm rounded-md bg-secondary border border-border hover:bg-accent text-foreground transition-colors"
+          >
+            <Star size={13} />
+            Star on GitHub
+          </button>
+        </div>
+      </SectionCard>
+
       <SectionCard title="We'd Love to Hear from You" icon={<MessageSquareHeart size={14} />}>
         <div className="py-3">
           <p className="text-sm text-muted-foreground">
@@ -91,30 +111,17 @@ export default function FeedbackPage() {
             <p className="text-xs text-red-600 dark:text-red-400">{errorText}</p>
           )}
 
-          <button
-            type="submit"
-            disabled={!message.trim() || status === "sending"}
-            className="inline-flex items-center gap-1.5 h-8 px-3 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-          >
-            <Send size={13} />
-            {status === "sending" ? "Sending..." : "Send Feedback"}
-          </button>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={!message.trim() || status === "sending"}
+              className="inline-flex items-center gap-1.5 h-8 px-3 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              <Send size={13} />
+              {status === "sending" ? "Sending..." : "Send Feedback"}
+            </button>
+          </div>
         </form>
-      </SectionCard>
-
-      <SectionCard title="Support the Project" icon={<Star size={14} />}>
-        <div className="py-3 space-y-3">
-          <p className="text-sm text-muted-foreground">
-            If you enjoy AudioShift, a star on GitHub goes a long way!
-          </p>
-          <button
-            onClick={() => openUrl("https://github.com/aarsla/audioshift")}
-            className="inline-flex items-center gap-1.5 h-8 px-3 text-sm rounded-md bg-secondary border border-border hover:bg-accent text-foreground transition-colors"
-          >
-            <Star size={13} />
-            Star on GitHub
-          </button>
-        </div>
       </SectionCard>
     </div>
   );
