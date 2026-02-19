@@ -212,9 +212,9 @@ export default function Onboarding() {
       {/* Content */}
       <div className="flex-1 flex flex-col px-10 pb-6 min-h-0">
         {/* Step content */}
-        <div className="flex-1 flex flex-col justify-center min-h-0">
+        <div className="flex-1 flex flex-col min-h-0">
           {STEPS[step] === "Welcome" && (
-            <div className="space-y-4 text-center">
+            <div className="flex-1 flex flex-col justify-center space-y-4 text-center">
               <div className="flex justify-center">
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
                   <AudioWaveform size={32} className="text-primary" />
@@ -233,117 +233,125 @@ export default function Onboarding() {
           )}
 
           {STEPS[step] === "Model" && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <Download size={20} className="text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold">Speech Model</h2>
-                  <p className="text-xs text-muted-foreground">
-                    Choose a model for local transcription.
-                  </p>
-                </div>
-              </div>
-
-              {/* Model selector + action in one row */}
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1 min-w-0">
-                  <select
-                    value={selectedModelId}
-                    onChange={(e) => handleModelChange(e.target.value)}
-                    disabled={isDownloading}
-                    className="w-full appearance-none bg-card border border-border rounded-xl px-4 py-2.5 pr-9 text-sm text-foreground cursor-pointer hover:border-primary/40 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {models.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} (~{m.sizeLabel}){m.ready ? " ✓" : ""}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={14}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground"
-                  />
-                </div>
-
-                {selectedModel?.ready ? (
-                  <div className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 shrink-0">
-                    <Check size={14} className="text-emerald-500" />
-                    <span className="text-sm text-emerald-600 dark:text-emerald-400">Ready</span>
+            <div className="flex-1 flex flex-col pt-4">
+              {/* Header */}
+              <div className="text-center mb-6">
+                <div className="flex justify-center mb-3">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <Download size={24} className="text-primary" />
                   </div>
-                ) : isDownloading ? (
-                  <div className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-card border border-border shrink-0">
-                    <Loader2 size={14} className="animate-spin text-primary" />
-                    <span className="text-sm font-mono text-foreground">{overallPct}%</span>
-                  </div>
-                ) : (
-                  <button
-                    onClick={startDownload}
-                    className="flex items-center gap-1.5 px-4 py-2.5 text-sm rounded-xl shrink-0
-                               bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                  >
-                    <Download size={14} />
-                    Download
-                  </button>
-                )}
-              </div>
-
-              {/* Description / status below */}
-              {selectedModel && !isDownloading && !downloadError && (
-                <p className="text-xs text-muted-foreground px-1">
-                  {selectedModel.description}
+                </div>
+                <h2 className="text-xl font-semibold tracking-tight">Speech Model</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Choose a model for local transcription.
                 </p>
-              )}
+              </div>
 
-              {isDownloading && (
-                <div className="space-y-1.5">
-                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full transition-all duration-300"
-                      style={{ width: `${Math.max(overallPct, 1)}%` }}
+              {/* Content */}
+              <div className="space-y-3">
+                {/* Model selector + action */}
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1 min-w-0">
+                    <select
+                      value={selectedModelId}
+                      onChange={(e) => handleModelChange(e.target.value)}
+                      disabled={isDownloading}
+                      className="w-full appearance-none bg-card border border-border rounded-xl px-4 py-2.5 pr-9 text-sm text-foreground cursor-pointer hover:border-primary/40 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {models.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name} (~{m.sizeLabel}){m.ready ? " \u2713" : ""}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={14}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground"
                     />
                   </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    {formatMB(overallDl)} / ~{formatMB(overallTotal)} MB{currentFile ? ` — ${currentFile}` : ""}
-                  </p>
-                </div>
-              )}
 
-              {downloadError && (
-                <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/5 border border-destructive/20">
-                  <TriangleAlert size={14} className="text-destructive shrink-0 mt-0.5" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground">Download failed</p>
-                    <p className="text-xs text-muted-foreground mt-0.5 break-words">{downloadError}</p>
+                  {selectedModel?.ready ? (
+                    <div className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 shrink-0">
+                      <Check size={14} className="text-emerald-500" />
+                      <span className="text-sm text-emerald-600 dark:text-emerald-400">Ready</span>
+                    </div>
+                  ) : isDownloading ? (
+                    <div className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-card border border-border shrink-0">
+                      <Loader2 size={14} className="animate-spin text-primary" />
+                      <span className="text-sm font-mono text-foreground">{overallPct}%</span>
+                    </div>
+                  ) : (
                     <button
-                      onClick={retryDownload}
-                      className="mt-2 flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg
+                      onClick={startDownload}
+                      className="flex items-center gap-1.5 px-4 py-2.5 text-sm rounded-xl shrink-0
                                  bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                     >
-                      <Download size={12} />
-                      Retry
+                      <Download size={14} />
+                      Download
                     </button>
-                  </div>
+                  )}
                 </div>
-              )}
+
+                {/* Description */}
+                {selectedModel && !isDownloading && !downloadError && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    {selectedModel.description}
+                  </p>
+                )}
+
+                {/* Download progress */}
+                {isDownloading && (
+                  <div className="space-y-1.5">
+                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full transition-all duration-300"
+                        style={{ width: `${Math.max(overallPct, 1)}%` }}
+                      />
+                    </div>
+                    <p className="text-[11px] text-muted-foreground text-center">
+                      {formatMB(overallDl)} / ~{formatMB(overallTotal)} MB{currentFile ? ` — ${currentFile}` : ""}
+                    </p>
+                  </div>
+                )}
+
+                {/* Download error */}
+                {downloadError && (
+                  <div className="flex items-start gap-2 p-3 rounded-xl bg-destructive/5 border border-destructive/20">
+                    <TriangleAlert size={14} className="text-destructive shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground">Download failed</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 break-words">{downloadError}</p>
+                      <button
+                        onClick={retryDownload}
+                        className="mt-2 flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg
+                                   bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                      >
+                        <Download size={12} />
+                        Retry
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
           {STEPS[step] === "Microphone" && (
-            <div className="space-y-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <Mic size={20} className="text-primary" />
+            <div className="flex-1 flex flex-col pt-2">
+              {/* Header */}
+              <div className="text-center mb-5">
+                <div className="flex justify-center mb-3">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <Mic size={24} className="text-primary" />
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold">Microphone Access</h2>
-                  <p className="text-xs text-muted-foreground">
-                    AudioShift needs microphone access to capture your voice.
-                  </p>
-                </div>
+                <h2 className="text-xl font-semibold tracking-tight">Microphone Access</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  AudioShift needs microphone access to capture your voice.
+                </p>
               </div>
 
+              {/* Content */}
               {status.mic_granted ? (
                 <div className="flex items-center gap-2.5 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                   <Check size={18} className="text-emerald-500 shrink-0" />
@@ -353,39 +361,42 @@ export default function Onboarding() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  <div className="p-4 rounded-xl bg-card border border-border">
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Click the button below to grant microphone access.
-                    </p>
-                    <button
-                      onClick={() => invoke("request_microphone_permission")}
-                      className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg
-                                 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                    >
-                      <Mic size={14} />
-                      Grant Microphone Access
-                    </button>
-                  </div>
+                <div className="p-4 rounded-xl bg-card border border-border text-center">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Click the button below to grant microphone access.
+                  </p>
+                  <button
+                    onClick={() => invoke("request_microphone_permission")}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg
+                               bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                  >
+                    <Mic size={14} />
+                    Grant Microphone Access
+                  </button>
+                  <p className="text-[11px] text-muted-foreground/50 mt-3">
+                    Updates automatically once access is granted.
+                  </p>
                 </div>
               )}
             </div>
           )}
 
           {STEPS[step] === "Paste Permission" && (
-            <div className="space-y-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <Keyboard size={20} className="text-primary" />
+            <div className="flex-1 flex flex-col pt-2">
+              {/* Header */}
+              <div className="text-center mb-5">
+                <div className="flex justify-center mb-3">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <Keyboard size={24} className="text-primary" />
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold">Paste Permission</h2>
-                  <p className="text-xs text-muted-foreground">
-                    AudioShift needs permission to paste transcribed text into your apps.
-                  </p>
-                </div>
+                <h2 className="text-xl font-semibold tracking-tight">Paste Permission</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  AudioShift needs permission to paste transcribed text into your apps.
+                </p>
               </div>
 
+              {/* Content */}
               {status.paste_granted ? (
                 <div className="flex items-center gap-2.5 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                   <Check size={18} className="text-emerald-500 shrink-0" />
@@ -395,22 +406,20 @@ export default function Onboarding() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  <div className="p-4 rounded-xl bg-card border border-border">
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Click the button below to grant paste permission. You may need to toggle AudioShift in System Settings.
-                    </p>
-                    <button
-                      onClick={() => invoke("request_paste_permission")}
-                      className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg
-                                 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                    >
-                      <Keyboard size={14} />
-                      Grant Paste Permission
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground/70">
-                    This page will update automatically once access is granted.
+                <div className="p-4 rounded-xl bg-card border border-border text-center">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Click the button below to grant paste permission. You may need to toggle AudioShift in System Settings.
+                  </p>
+                  <button
+                    onClick={() => invoke("request_paste_permission")}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg
+                               bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                  >
+                    <Keyboard size={14} />
+                    Grant Paste Permission
+                  </button>
+                  <p className="text-[11px] text-muted-foreground/50 mt-3">
+                    Updates automatically once access is granted.
                   </p>
                 </div>
               )}
@@ -418,48 +427,58 @@ export default function Onboarding() {
           )}
 
           {STEPS[step] === "Ready" && (
-            <div className="space-y-4 text-center">
-              <div>
+            <div className="flex-1 flex flex-col pt-2">
+              {/* Header */}
+              <div className="text-center mb-4">
                 <h2 className="text-2xl font-semibold tracking-tight">You're all set!</h2>
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-sm text-muted-foreground mt-1">
                   Try it out — press the shortcut and say something.
                 </p>
               </div>
 
-              <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-border mx-auto">
-                <span className="text-xs text-muted-foreground">Press</span>
-                <kbd className="px-2.5 py-1 rounded-md bg-muted text-sm font-mono font-medium text-foreground">
-                  {shortcutDisplay(hotkey)}
-                </kbd>
-                <span className="text-xs text-muted-foreground">anywhere to record</span>
+              {/* Hotkey card */}
+              <div className="flex justify-center mb-4">
+                <div className="px-5 py-3 rounded-xl bg-card border border-border text-center">
+                  <kbd className="text-lg font-mono font-semibold text-foreground tracking-wide">
+                    {shortcutDisplay(hotkey)}
+                  </kbd>
+                  <p className="text-[11px] text-muted-foreground mt-1">press anywhere to record</p>
+                </div>
               </div>
 
-              {/* Test capture area */}
-              <div className="mx-auto">
+              {/* Test area */}
+              <div className="flex-1 flex flex-col justify-center min-h-[80px]">
+                {testState === "idle" && !testResult && (
+                  <p className="text-xs text-muted-foreground/50 text-center">
+                    Press the shortcut to test recording
+                  </p>
+                )}
+
                 {testState === "recording" && (
-                  <div className="flex items-center justify-center gap-2 py-3 text-sm text-red-500 whitespace-nowrap">
+                  <div className="flex items-center justify-center gap-2 text-sm text-red-500">
                     <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
                     Listening... press <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono text-xs text-foreground">{shortcutDisplay(hotkey)}</kbd> to stop
                   </div>
                 )}
 
                 {testState === "transcribing" && (
-                  <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                     <Loader2 size={14} className="animate-spin" /> Transcribing...
                   </div>
                 )}
 
-                {testResult && (
-                  <div className="p-4 rounded-xl bg-primary/5 border border-primary/15">
+                {testState === "idle" && testResult && (
+                  <div className="p-3 rounded-xl bg-primary/5 border border-primary/15 mx-auto max-w-full">
                     <p className="text-sm text-foreground text-center italic">"{testResult}"</p>
                   </div>
                 )}
               </div>
 
-              <div className="space-y-1.5 text-left max-w-xs mx-auto">
-                <StatusRow label="Speech Model" ok={status.model_ready} />
-                {isMac && <StatusRow label="Microphone" ok={status.mic_granted} />}
-                {isMac && <StatusRow label="Paste Permission" ok={status.paste_granted} />}
+              {/* Status row — compact horizontal */}
+              <div className="flex items-center justify-center gap-4 pt-2">
+                <StatusDot label="Model" ok={status.model_ready} />
+                {isMac && <StatusDot label="Microphone" ok={status.mic_granted} />}
+                {isMac && <StatusDot label="Paste" ok={status.paste_granted} />}
               </div>
             </div>
           )}
@@ -467,23 +486,18 @@ export default function Onboarding() {
 
         {/* Navigation */}
         <div className="shrink-0 pt-4 border-t border-border">
-          {/* Step dots (hidden on last screen) */}
-          {step < lastStep && (
-            <div className="flex justify-center gap-1.5 mb-4">
-              {STEPS.map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                    i === step ? "bg-primary" : i < step ? "bg-primary/40" : "bg-muted-foreground/20"
-                  }`}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Buttons */}
           {step === 0 ? (
-            <div className="flex justify-center">
+            <div className="flex items-center justify-between">
+              <div className="flex gap-1.5">
+                {STEPS.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                      i === step ? "bg-primary" : "bg-muted-foreground/20"
+                    }`}
+                  />
+                ))}
+              </div>
               <button
                 onClick={() => setStep(1)}
                 className="flex items-center gap-1.5 px-5 py-2 text-sm rounded-lg
@@ -495,30 +509,35 @@ export default function Onboarding() {
             </div>
           ) : step < lastStep ? (
             <div className="flex items-center justify-between">
-              <button
-                onClick={() => setStep(step - 1)}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg
-                           text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ChevronLeft size={14} />
-                Back
-              </button>
-              <button
-                onClick={() => setStep(step + 1)}
-                className="px-3 py-1.5 text-sm rounded-lg
-                           text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Skip
-              </button>
-              <button
-                onClick={() => setStep(step + 1)}
-                className="flex items-center gap-1.5 px-5 py-2 text-sm rounded-lg
-                           bg-primary text-primary-foreground hover:bg-primary/90
-                           transition-colors"
-              >
-                Next
-                <ChevronRight size={14} />
-              </button>
+              <div className="flex items-center gap-1.5">
+                {STEPS.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                      i === step ? "bg-primary" : i < step ? "bg-primary/40" : "bg-muted-foreground/20"
+                    }`}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setStep(step - 1)}
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg
+                             text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ChevronLeft size={14} />
+                  Back
+                </button>
+                <button
+                  onClick={() => setStep(step + 1)}
+                  className="flex items-center gap-1.5 px-5 py-2 text-sm rounded-lg
+                             bg-primary text-primary-foreground hover:bg-primary/90
+                             transition-colors"
+                >
+                  Next
+                  <ChevronRight size={14} />
+                </button>
+              </div>
             </div>
           ) : (
             <div className="flex justify-center">
@@ -537,14 +556,11 @@ export default function Onboarding() {
   );
 }
 
-function StatusRow({ label, ok }: { label: string; ok: boolean }) {
+function StatusDot({ label, ok }: { label: string; ok: boolean }) {
   return (
-    <div className="flex items-center gap-2 py-1">
-      <div className={`w-2 h-2 rounded-full shrink-0 ${ok ? "bg-emerald-500" : "bg-amber-500"}`} />
-      <span className="text-sm text-foreground">{label}</span>
-      <span className="text-xs text-muted-foreground ml-auto">
-        {ok ? "Ready" : "Not set up"}
-      </span>
+    <div className="flex items-center gap-1.5">
+      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${ok ? "bg-emerald-500" : "bg-amber-500"}`} />
+      <span className="text-xs text-muted-foreground">{label}</span>
     </div>
   );
 }
