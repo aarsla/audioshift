@@ -23,7 +23,7 @@ export default function PermissionsPage({
         />
         <Separator />
         <PermissionIndicator
-          label="Accessibility"
+          label="Paste Permission"
           status={a11yPermission}
           onOpen={() => onOpenSettings("accessibility")}
         />

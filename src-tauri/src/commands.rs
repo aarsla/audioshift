@@ -228,22 +228,25 @@ pub fn request_microphone_permission() {
 }
 
 #[tauri::command]
-pub fn check_accessibility_permission() -> String {
+pub fn check_paste_permission() -> String {
     #[cfg(target_os = "macos")]
     {
-        // AXIsProcessTrusted() caches results and is unreliable for signed builds.
-        // AXIsProcessTrustedWithOptions(prompt=false) gives fresh results.
+        // Check Accessibility TCC via raw FFI (no macos-accessibility-client crate).
+        // AXIsProcessTrustedWithOptions(prompt=false) gives fresh, uncached results.
         use core_foundation::boolean::CFBoolean;
         use core_foundation::dictionary::CFDictionary;
         use core_foundation::string::CFString;
         use core_foundation::base::TCFType;
-        use macos_accessibility_client::raw::{kAXTrustedCheckOptionPrompt, AXIsProcessTrustedWithOptions};
+
+        extern "C" {
+            fn AXIsProcessTrustedWithOptions(options: *const std::ffi::c_void) -> bool;
+        }
 
         let trusted = unsafe {
-            let key = CFString::wrap_under_get_rule(kAXTrustedCheckOptionPrompt);
+            let key = CFString::new("AXTrustedCheckOptionPrompt");
             let dict: CFDictionary<CFString, CFBoolean> =
                 CFDictionary::from_CFType_pairs(&[(key, CFBoolean::false_value())]);
-            AXIsProcessTrustedWithOptions(dict.as_concrete_TypeRef()) != 0
+            AXIsProcessTrustedWithOptions(dict.as_concrete_TypeRef().cast())
         };
         if trusted { "granted".to_string() } else { "denied".to_string() }
     }
@@ -254,15 +257,22 @@ pub fn check_accessibility_permission() -> String {
 }
 
 #[tauri::command]
-pub fn request_accessibility_permission() -> String {
+pub fn request_paste_permission() -> String {
     #[cfg(target_os = "macos")]
     {
-        let status = check_accessibility_permission();
+        let status = check_paste_permission();
         if status == "granted" {
             return "granted".to_string();
         }
-        // Don't call AXIsProcessTrustedWithOptions(prompt=true) — on macOS 16
-        // it resets existing permissions. Just open System Settings directly.
+        // CGRequestPostEventAccess() triggers the native TCC prompt for kTCCServicePostEvent.
+        // If already denied, fall back to opening the Input Monitoring pane in System Settings.
+        extern "C" {
+            fn CGRequestPostEventAccess() -> bool;
+        }
+        let granted = unsafe { CGRequestPostEventAccess() };
+        if granted {
+            return "granted".to_string();
+        }
         open_privacy_settings("accessibility".to_string());
         "denied".to_string()
     }
@@ -310,6 +320,7 @@ pub fn open_privacy_settings(pane: String) {
         let url = match pane.as_str() {
             "microphone" => "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone",
             "accessibility" => "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
+            "input-monitoring" => "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent",
             "files-and-folders" => "x-apple.systempreferences:com.apple.preference.security?Privacy_FilesAndFolders",
             _ => return,
         };
@@ -460,17 +471,17 @@ pub async fn delete_model(model_id: String) -> Result<(), String> {
 pub struct OnboardingStatus {
     model_ready: bool,
     mic_granted: bool,
-    accessibility_granted: bool,
+    paste_granted: bool,
 }
 
 #[tauri::command]
 pub fn check_onboarding_needed() -> OnboardingStatus {
     let mic = check_microphone_permission();
-    let a11y = check_accessibility_permission();
+    let paste = check_paste_permission();
     OnboardingStatus {
         model_ready: model_registry::any_model_ready(),
         mic_granted: mic == "granted",
-        accessibility_granted: a11y == "granted",
+        paste_granted: paste == "granted",
     }
 }
 

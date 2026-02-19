@@ -42,7 +42,6 @@ parakeet-rs = "0.3"
 whisper-rs = { version = "0.15", features = ["metal"] }
 objc2 = "0.6"
 objc2-foundation = { version = "0.3", features = ["NSString"] }
-macos-accessibility-client = "0.0.1"
 core-foundation = "0.9"
 core-graphics = "0.24"
 objc2-app-kit = { version = "0.3.2", features = ["NSMenu", "NSMenuItem", "NSApplication", "NSRunningApplication"] }

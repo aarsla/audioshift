@@ -347,7 +347,7 @@ export default function Settings() {
     setA11yPermission("checking");
     const mic = await invoke<string>("check_microphone_permission");
     setMicPermission(mic === "granted" ? "granted" : "denied");
-    const a11y = await invoke<string>("check_accessibility_permission");
+    const a11y = await invoke<string>("check_paste_permission");
     setA11yPermission(a11y === "granted" ? "granted" : "denied");
   };
 

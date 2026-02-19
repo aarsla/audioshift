@@ -18,7 +18,7 @@ import {
 interface OnboardingStatus {
   model_ready: boolean;
   mic_granted: boolean;
-  accessibility_granted: boolean;
+  paste_granted: boolean;
 }
 
 interface DownloadProgress {
@@ -44,7 +44,7 @@ interface ModelInfo {
 
 const isMac = navigator.userAgent.includes("Mac");
 const STEPS = isMac
-  ? (["Welcome", "Model", "Microphone", "Accessibility", "Ready"] as const)
+  ? (["Welcome", "Model", "Microphone", "Paste Permission", "Ready"] as const)
   : (["Welcome", "Model", "Ready"] as const);
 
 function formatMB(bytes: number): string {
@@ -70,7 +70,7 @@ export default function Onboarding() {
   const [status, setStatus] = useState<OnboardingStatus>({
     model_ready: false,
     mic_granted: false,
-    accessibility_granted: false,
+    paste_granted: false,
   });
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [selectedModelId, setSelectedModelId] = useState("parakeet-tdt-0.6b-v3");
@@ -135,7 +135,7 @@ export default function Onboarding() {
   // Poll status on permission steps and Ready as backup for system settings changes
   useEffect(() => {
     const currentStep = STEPS[step];
-    if (currentStep !== "Microphone" && currentStep !== "Accessibility" && currentStep !== "Ready") return;
+    if (currentStep !== "Microphone" && currentStep !== "Paste Permission" && currentStep !== "Ready") return;
     const interval = setInterval(async () => {
       const s = await invoke<OnboardingStatus>("check_onboarding_needed");
       setStatus(s);
@@ -372,25 +372,25 @@ export default function Onboarding() {
             </div>
           )}
 
-          {STEPS[step] === "Accessibility" && (
+          {STEPS[step] === "Paste Permission" && (
             <div className="space-y-5">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                   <Keyboard size={20} className="text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold">Accessibility Access</h2>
+                  <h2 className="text-lg font-semibold">Paste Permission</h2>
                   <p className="text-xs text-muted-foreground">
-                    Required to paste transcribed text into other apps.
+                    AudioShift needs permission to paste transcribed text into your apps.
                   </p>
                 </div>
               </div>
 
-              {status.accessibility_granted ? (
+              {status.paste_granted ? (
                 <div className="flex items-center gap-2.5 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                   <Check size={18} className="text-emerald-500 shrink-0" />
                   <div>
-                    <p className="text-sm font-medium text-foreground">Accessibility access granted</p>
+                    <p className="text-sm font-medium text-foreground">Paste permission granted</p>
                     <p className="text-xs text-muted-foreground">You're all set.</p>
                   </div>
                 </div>
@@ -398,15 +398,15 @@ export default function Onboarding() {
                 <div className="space-y-3">
                   <div className="p-4 rounded-xl bg-card border border-border">
                     <p className="text-sm text-muted-foreground mb-3">
-                      Click the button below to grant accessibility access. You may need to toggle AudioShift in System Settings.
+                      Click the button below to grant paste permission. You may need to toggle AudioShift in System Settings.
                     </p>
                     <button
-                      onClick={() => invoke("request_accessibility_permission")}
+                      onClick={() => invoke("request_paste_permission")}
                       className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg
                                  bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                     >
                       <Keyboard size={14} />
-                      Grant Accessibility Access
+                      Grant Paste Permission
                     </button>
                   </div>
                   <p className="text-[11px] text-muted-foreground/70">
@@ -459,7 +459,7 @@ export default function Onboarding() {
               <div className="space-y-1.5 text-left max-w-xs mx-auto">
                 <StatusRow label="Speech Model" ok={status.model_ready} />
                 {isMac && <StatusRow label="Microphone" ok={status.mic_granted} />}
-                {isMac && <StatusRow label="Accessibility" ok={status.accessibility_granted} />}
+                {isMac && <StatusRow label="Paste Permission" ok={status.paste_granted} />}
               </div>
             </div>
           )}
