@@ -280,13 +280,36 @@ pub fn check_paste_permission() -> String {
             fn AXIsProcessTrustedWithOptions(options: *const std::ffi::c_void) -> bool;
         }
 
-        let trusted = unsafe {
+        let ax_trusted = unsafe {
             let key = CFString::new("AXTrustedCheckOptionPrompt");
             let dict: CFDictionary<CFString, CFBoolean> =
                 CFDictionary::from_CFType_pairs(&[(key, CFBoolean::false_value())]);
             AXIsProcessTrustedWithOptions(dict.as_concrete_TypeRef().cast())
         };
-        if trusted { "granted".to_string() } else { "denied".to_string() }
+        if ax_trusted {
+            return "granted".to_string();
+        }
+
+        // Also check PostEvent (Input Monitoring) — CGEventPost works with either
+        // permission. CGPreflightPostEventAccess() is macOS 15+; use dlsym for compat.
+        extern "C" {
+            fn dlsym(handle: *mut std::ffi::c_void, symbol: *const i8) -> *mut std::ffi::c_void;
+        }
+        const RTLD_DEFAULT: *mut std::ffi::c_void = -2isize as *mut std::ffi::c_void;
+
+        let post_ok = unsafe {
+            let sym = dlsym(
+                RTLD_DEFAULT,
+                b"CGPreflightPostEventAccess\0".as_ptr().cast(),
+            );
+            if sym.is_null() {
+                false
+            } else {
+                let func: extern "C" fn() -> bool = std::mem::transmute(sym);
+                func()
+            }
+        };
+        if post_ok { "granted".to_string() } else { "denied".to_string() }
     }
     #[cfg(not(target_os = "macos"))]
     {
