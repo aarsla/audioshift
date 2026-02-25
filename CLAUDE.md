@@ -92,6 +92,27 @@ Keep the changelog brief — only user-facing or important changes, no implement
 
 `make dev` runs a bare binary. macOS Accessibility permissions are per-binary and reset on recompile. If paste breaks: `pnpm tauri build --debug --bundles app --target aarch64-apple-darwin`, then re-grant Accessibility.
 
+### macOS TCC (permission) troubleshooting
+
+macOS tracks permissions by code signing identity. When a new build has a different code hash, old TCC entries go stale — the permission appears enabled in System Settings but silently fails. Symptoms: `CGEvent.post()` returns success but keystrokes aren't delivered; `AXIsProcessTrustedWithOptions` returns `false` despite Accessibility being toggled on.
+
+**Reset and re-grant when:**
+- Auto-paste stops working after an app update or rebuild
+- `check_paste_permission` returns `"denied"` but Accessibility shows enabled in System Settings
+- Debug build doesn't get permissions (different identity than production)
+
+```bash
+# Reset Accessibility for direct build
+tccutil reset Accessibility io.audioshift.desktop
+
+# Reset Accessibility for MAS build
+tccutil reset Accessibility io.audioshift.app
+
+# Then re-grant: System Settings → Privacy & Security → Accessibility → toggle AudioShift on
+```
+
+**Debug vs production identity:** Debug builds are ad-hoc signed with a random identifier (e.g. `audioshift-61f45133f18f41aa`), while production builds use `io.audioshift.desktop`. A TCC entry for one doesn't apply to the other.
+
 ## Reactive UI
 
 The frontend must always reflect current backend state. These rules apply to all new and existing code:
