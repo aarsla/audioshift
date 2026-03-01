@@ -10,7 +10,7 @@ No accounts. No subscriptions. No cloud.
   <img src="assets/audioshift-light.png" alt="AudioShift" width="100%">
 </picture>
 
-**[Download](https://github.com/aarsla/audioshift/releases)** | **[Mac App Store](https://apps.apple.com/us/app/audioshift/id6759166457)** | **[Website](https://audioshift.io)**
+**[Download](https://github.com/aarsla/audioshift/releases)** | **[Website](https://audioshift.io)**
 
 ## Features
 
@@ -30,7 +30,7 @@ No accounts. No subscriptions. No cloud.
 - **Transcription history** — searchable history with app context, audio recordings, and transcripts saved to `~/Documents/AudioShift`
 - **Recording overlay** — four visual themes with real-time waveform visualization
 - **Customizable** — themes (light/dark/system), accent colors, overlay position, start sounds
-- **Auto-updates** — built-in updater for direct downloads (Mac App Store updates via the store)
+- **Auto-updates** — built-in updater
 
 ## Privacy
 
@@ -40,7 +40,7 @@ AudioShift processes everything locally. Zero network calls during transcription
 
 | Platform | Version | Architecture | Distribution |
 |----------|---------|-------------|--------------|
-| macOS | 12+ | Apple Silicon | DMG, Mac App Store |
+| macOS | 12+ | Apple Silicon | DMG |
 | Windows | 10+ | x86_64 | NSIS installer |
 
 ## Installation
@@ -55,10 +55,6 @@ Three permissions are required:
 - **Documents Folder** — to save transcription history and audio recordings to `~/Documents/AudioShift`
 
 You'll be prompted on first use. Manage in **System Settings > Privacy & Security**.
-
-### macOS (App Store)
-
-Install from the [Mac App Store](https://apps.apple.com/us/app/audioshift/id6759166457). Permissions are the same as above.
 
 ### Windows
 
@@ -83,15 +79,12 @@ If the installer is blocked entirely, you may need to temporarily adjust: **Sett
 
 ```bash
 make dev          # Dev mode with hot reload
-make build        # Production build (direct distribution)
-make build-mas    # Mac App Store build (.app, aarch64)
-make check        # Rust type check (direct)
-make check-mas    # Rust type check (MAS)
+make build        # Production build
+make check        # Rust type check
 make check-ts     # TypeScript type check
-make check-all    # All checks (Rust direct + MAS + TypeScript)
+make check-all    # All checks
 make clean-dev    # Reset permissions, settings, history and restart dev
 make run          # Build, reset, and open production .app
-make pkg          # Build, sign, and package for App Store submission
 ```
 
 > **Note:** `cargo check` alone won't work — use `make check` which sets the required Tauri env vars.

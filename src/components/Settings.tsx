@@ -62,7 +62,6 @@ export default function Settings() {
   const [saveHistory, setSaveHistory] = useState(true);
   const [removeFillerWords, setRemoveFillerWords] = useState(true);
   const [fillerWords, setFillerWords] = useState<string[]>([]);
-  const [buildVariant, setBuildVariant] = useState<"direct" | "mas">("direct");
   const monitorSmoothed = useRef(0);
   const monitorRaf = useRef(0);
 
@@ -84,8 +83,7 @@ export default function Settings() {
       }
     });
     invoke<string>("get_current_hotkey").then(setHotkey);
-    invoke<string>("get_build_variant").then((v) => setBuildVariant(v as "direct" | "mas"));
-    invoke<ModelStatusEntry[]>("get_all_models_status").then(setModels);
+invoke<ModelStatusEntry[]>("get_all_models_status").then(setModels);
     invoke<string>("get_live_model").then(setLiveModel);
     invoke<string>("get_transcription_language").then(setTranscriptionLanguage);
     invoke<boolean>("get_translate_to_english").then(setTranslateToEnglish);
@@ -278,7 +276,7 @@ export default function Settings() {
       try {
         const isMacOS = navigator.userAgent.includes("Mac");
         if (isMacOS) {
-          const enabled = await invoke<boolean>("mas_login_item_is_enabled");
+          const enabled = await invoke<boolean>("login_item_is_enabled");
           setAutostart(enabled);
         } else {
           const autostartEnabled = await isEnabled();
@@ -377,8 +375,7 @@ export default function Settings() {
     try {
       const isMacOS = navigator.userAgent.includes("Mac");
       if (isMacOS) {
-        if (enabled) await invoke("mas_login_item_enable");
-        else await invoke("mas_login_item_disable");
+        await invoke("login_item_set_enabled", { enabled });
       } else {
         if (enabled) await enable(); else await disable();
       }
@@ -618,7 +615,6 @@ export default function Settings() {
 
   // --- Navigation ---
 
-  const isMas = buildVariant === "mas";
   const isMac = navigator.userAgent.includes("Mac");
 
   const navItems: { id: Section; label: string; icon: React.ReactNode }[] = [
@@ -628,7 +624,7 @@ export default function Settings() {
     { id: "output", label: "Output", icon: <ClipboardPaste size={16} /> },
     { id: "appearance", label: "Appearance", icon: <Palette size={16} /> },
     { id: "history", label: "History", icon: <Clock size={16} /> },
-    ...(!isMas ? [{ id: "updates" as Section, label: "Updates", icon: <Download size={16} /> }] : []),
+    { id: "updates" as Section, label: "Updates", icon: <Download size={16} /> },
     ...(isMac ? [{ id: "permissions" as Section, label: "Permissions", icon: <Shield size={16} /> }] : []),
     { id: "feedback", label: "Feedback", icon: <MessageSquare size={16} /> },
     { id: "about", label: "About", icon: <Info size={16} /> },
@@ -644,7 +640,6 @@ export default function Settings() {
             autostart={autostart}
             showInDock={showInDock}
             startSound={startSound}
-            isMas={isMas}
             onAutostartChange={handleAutostartChange}
             onDockChange={handleDockChange}
             onStartSoundChange={handleStartSoundChange}
@@ -766,7 +761,7 @@ export default function Settings() {
         <nav className="flex-1 px-3 space-y-0.5">
           {navItems.map((item) => (
             <React.Fragment key={item.id}>
-              {(item.id === "updates" || (isMas && item.id === "permissions")) && (
+              {item.id === "updates" && (
                 <div className="!my-2 mx-1 h-px bg-border" />
               )}
             <NavItem
@@ -799,7 +794,7 @@ export default function Settings() {
         )}
         <div className="px-3 pb-3">
           <p className="text-[11px] text-muted-foreground/50 px-3">
-            AudioShift v1.1.5
+            AudioShift v1.1.6
           </p>
         </div>
       </div>

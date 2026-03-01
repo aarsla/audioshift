@@ -26,8 +26,6 @@ pub struct RecordingMeta {
 
 pub fn recordings_dir() -> PathBuf {
     // ~/Documents/AudioShift/Recordings
-    // For MAS (sandboxed), dirs::document_dir() returns the container's Documents
-    // folder which is always writable without extra entitlements.
     let docs = dirs::document_dir().unwrap_or_else(|| PathBuf::from("."));
     docs.join("AudioShift").join("Recordings")
 }

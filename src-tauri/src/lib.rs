@@ -100,9 +100,8 @@ pub fn run() {
             plugins::mac_rounded_corners::enable_rounded_corners,
             plugins::mac_rounded_corners::enable_modern_window_style,
             plugins::mac_rounded_corners::reposition_traffic_lights,
-            login_item::mas_login_item_is_enabled,
-            login_item::mas_login_item_enable,
-            login_item::mas_login_item_disable,
+            login_item::login_item_is_enabled,
+            login_item::login_item_set_enabled,
         ])
         .setup(|app| {
             // Create overlay window (hidden by default)

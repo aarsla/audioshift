@@ -15,7 +15,7 @@ src-tauri/src/
   lib.rs            # App setup, mod declarations
   commands.rs       # All #[tauri::command] IPC handlers
   updater.rs        # Auto-update (#[cfg(feature = "updater")])
-  login_item.rs     # MAS login item (#[cfg(feature = "mas")])
+  login_item.rs     # macOS login item via SMAppService
   windows.rs        # Window creation (overlay, settings, onboarding)
   tray.rs           # Tray menu, icons, status text, event listeners
   state.rs          # AppState: status, hotkey, tray handle, audio buffer
@@ -49,26 +49,18 @@ src/
 - **Tray:** Dynamic icon/text via handles stored in AppState
 - **Model preloading:** Model loaded into memory at startup + on model change for instant first transcription
 
-## Build Variants
+## Build
 
-| | Direct | Mac App Store |
-|---|---|---|
-| Features | `default` (includes `updater`) | `mas` (no updater, no autostart) |
-| Config | `tauri.conf.json` | `tauri.mas.conf.json` |
-| macOSPrivateApi | `false` | `false` |
-| Distribution | DMG + updater | `.app` for App Store |
-| Bundle ID | `io.audioshift.desktop` | `io.audioshift.app` |
-
-Feature gates: `#[cfg(feature = "updater")]`, `#[cfg(feature = "mas")]`, `#[cfg(not(feature = "mas"))]`, `#[cfg(target_os = "macos")]`
+- **Bundle ID:** `io.audioshift.desktop`
+- **Distribution:** DMG + in-app updater
+- **Feature gates:** `#[cfg(feature = "updater")]`, `#[cfg(target_os = "macos")]`
 
 ## Commands
 
 ```bash
 make dev          # Dev with hot reload
-make build        # Production (direct)
-make build-mas    # Mac App Store (.app, aarch64)
-make check        # Rust check (direct)
-make check-mas    # Rust check (MAS)
+make build        # Production build
+make check        # Rust check
 make check-ts     # TypeScript check
 make check-all    # All checks
 make release x.y.z  # Bump version everywhere, commit, push, tag → triggers CI
@@ -102,12 +94,7 @@ macOS tracks permissions by code signing identity. When a new build has a differ
 - Debug build doesn't get permissions (different identity than production)
 
 ```bash
-# Reset Accessibility for direct build
 tccutil reset Accessibility io.audioshift.desktop
-
-# Reset Accessibility for MAS build
-tccutil reset Accessibility io.audioshift.app
-
 # Then re-grant: System Settings → Privacy & Security → Accessibility → toggle AudioShift on
 ```
 
@@ -136,7 +123,7 @@ The frontend must always reflect current backend state. These rules apply to all
 
 ## Conventions
 
-- **No Apple private APIs.** Both direct and MAS builds must only use public, documented Apple APIs. Private APIs cause App Store rejection and can break across macOS updates.
+- **No Apple private APIs.** Only use public, documented Apple APIs. Private APIs can break across macOS updates.
 - Tailwind v4 `@theme inline` with OKLch color space
 - Path alias: `@/` → `src/`
 - Settings dual-persisted: `localStorage` (sync, flash-free) + tauri store `settings.json` (durable)

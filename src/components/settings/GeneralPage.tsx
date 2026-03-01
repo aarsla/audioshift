@@ -8,14 +8,13 @@ interface Props {
   autostart: boolean;
   showInDock: boolean;
   startSound: StartSound;
-  isMas?: boolean;
   onAutostartChange: (enabled: boolean) => void;
   onDockChange: (visible: boolean) => void;
   onStartSoundChange: (sound: StartSound) => void;
 }
 
 export default function GeneralPage({
-  autostart, showInDock, startSound, isMas: _isMas,
+  autostart, showInDock, startSound,
   onAutostartChange, onDockChange, onStartSoundChange,
 }: Props) {
   const isMac = navigator.userAgent.includes("Mac");

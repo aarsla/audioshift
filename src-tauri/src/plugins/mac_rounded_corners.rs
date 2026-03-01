@@ -67,7 +67,7 @@ impl Default for TrafficLightsConfig {
 }
 
 /// Enables rounded corners for the window (macOS only)
-/// Uses only public APIs - App Store compatible
+/// Uses only public APIs
 #[tauri::command]
 pub fn enable_rounded_corners<R: Runtime>(
     _app: AppHandle<R>,

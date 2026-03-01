@@ -736,10 +736,6 @@ pub fn set_filler_words(app: tauri::AppHandle, words: Vec<String>) -> Result<(),
 
 #[tauri::command]
 pub fn get_build_variant() -> String {
-    if cfg!(feature = "mas") {
-        "mas".to_string()
-    } else {
-        "direct".to_string()
-    }
+    "direct".to_string()
 }
 
